@@ -81,11 +81,21 @@ function randomId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+/** Lisää virheeseen tiedon siitä, missä vaiheessa se tapahtui (vianetsintää varten). */
+function stepError(step: string, e: unknown): Error {
+  const err = e as { message?: string; name?: string; code?: string; status?: number };
+  const parts = [err?.name, err?.code, err?.status, err?.message ?? String(e)].filter(Boolean).join(' / ');
+  return new Error(`[${step}] ${parts}`);
+}
+
 function friendlyError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
   if (/Liian monta/.test(msg)) return 'Olet lähettänyt jo monta raporttia tunnin sisällä. Yritä myöhemmin uudelleen.';
-  if (/network|fetch/i.test(msg)) return 'Ei verkkoyhteyttä. Tarkista yhteys ja yritä uudelleen.';
-  return 'Jokin meni vikaan. Yritä hetken päästä uudelleen.';
+  console.warn('[latu] virhe:', msg);
+  // Kehitystilassa (Expo Go) näytetään myös tekninen syy vianetsintää varten.
+  const detail = __DEV__ ? `\n\n(${msg})` : '';
+  if (/network|fetch/i.test(msg)) return 'Ei verkkoyhteyttä. Tarkista yhteys ja yritä uudelleen.' + detail;
+  return 'Jokin meni vikaan. Yritä hetken päästä uudelleen.' + detail;
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -103,8 +113,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const uid = userId ?? (await ensureSession(supabase));
-      if (!userId) setUserId(uid);
+      let uid = userId;
+      if (!uid) {
+        try {
+          uid = await ensureSession(supabase);
+        } catch (e) {
+          throw stepError('kirjautuminen', e);
+        }
+        setUserId(uid);
+      }
       const since = new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString();
       const [t, r, m] = await Promise.all([
         supabase.from('tracks').select('*').order('name'),
@@ -116,8 +133,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           .limit(1000),
         supabase.rpc('my_report_ids'),
       ]);
-      if (t.error) throw t.error;
-      if (r.error) throw r.error;
+      if (t.error) throw stepError('ladut', t.error);
+      if (r.error) throw stepError('raportit', r.error);
       const mine = new Set<string>(((m.data as string[] | null) ?? []).map(String));
       setTracks(
         (t.data as TrackRow[]).map((x) => ({
@@ -164,13 +181,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        const uid = userId ?? (await ensureSession(supabase));
+        let uid = userId;
+        if (!uid) {
+          try {
+            uid = await ensureSession(supabase);
+          } catch (e) {
+            throw stepError('kirjautuminen', e);
+          }
+        }
         const paths: string[] = [];
         for (const uri of input.photos) {
           const path = `${uid}/${randomId()}.jpg`;
-          const body = await new File(uri).arrayBuffer();
+          let body: ArrayBuffer;
+          try {
+            body = await new File(uri).arrayBuffer();
+          } catch (e) {
+            throw stepError('kuvan luku', e);
+          }
           const up = await supabase.storage.from(PHOTO_BUCKET).upload(path, body, { contentType: 'image/jpeg' });
-          if (up.error) throw up.error;
+          if (up.error) throw stepError('kuvan lähetys', up.error);
           paths.push(path);
         }
         const { data, error: insErr } = await supabase
@@ -185,7 +214,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           })
           .select('id,track_id,created_at,level,tags,comment,photo_paths,author_name')
           .single();
-        if (insErr) throw insErr;
+        if (insErr) throw stepError('raportin tallennus', insErr);
         setReports((cur) => [fromRow(data as Row, new Set([(data as Row).id])), ...cur]);
       } catch (e) {
         throw new Error(friendlyError(e));
