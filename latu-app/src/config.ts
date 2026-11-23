@@ -10,4 +10,4 @@ export const SUPABASE_KEY = 'sb_publishable_TCYGhWpxztfx2jWVv5uVHA_-Xp8-643';
 export const PHOTO_BUCKET = 'report-photos';
 
 /** Tietosuojaselosteen osoite (näytetään sovelluksessa ja App Storessa). */
-export const PRIVACY_URL = 'https://github.com/VilleNakari/latu/blob/main/PRIVACY.md';
+export const PRIVACY_URL = 'https://github.com/VilleNakari/latu/blob/main/latu-app/PRIVACY.md';
