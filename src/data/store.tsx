@@ -24,7 +24,7 @@ export const CARE_BASE = 'Pohjattu';
 const DEFAULT_PLUS: PlusSettings = {
   mapColorsRequiresPlus: false,
   weatherRequiresPlus: false,
-  notice: 'Latu+ on ilmainen kaikille kaudella 2026–27.',
+  notice: '',
 };
 
 export type BBox = { minLng: number; minLat: number; maxLng: number; maxLat: number };

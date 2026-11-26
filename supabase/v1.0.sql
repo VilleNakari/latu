@@ -181,7 +181,7 @@ alter table public.app_settings enable row level security;
 drop policy if exists "asetukset näkyvät" on public.app_settings;
 create policy "asetukset näkyvät" on public.app_settings for select using (true);
 insert into public.app_settings (key, value) values
-  ('plus', '{"mapColorsRequiresPlus": false, "weatherRequiresPlus": false, "notice": "Latu+ on ilmainen kaikille kaudella 2026–27."}')
+  ('plus', '{"mapColorsRequiresPlus": false, "weatherRequiresPlus": false, "notice": ""}')
 on conflict (key) do nothing;
 
 -- ---------- Oikeudet ----------
@@ -193,7 +193,8 @@ grant execute on function public.tracks_by_ids(text[]) to anon, authenticated;
 revoke execute on function public.sync_lipas() from public, anon, authenticated;
 revoke execute on function public.refresh_municipalities() from public, anon, authenticated;
 
--- ---------- Ajastus: päivitys joka yö klo 1.30 UTC (3.30 Suomen aikaa) ----------
+-- ---------- Ajastus: päivitys kerran viikossa, maanantaiyönä klo 1.30 UTC (3.30 Suomen aikaa) ----------
+-- Latujen sijainnit muuttuvat harvoin; latujen kunto tulee käyttäjien raporteista, ei LIPASista.
 select cron.unschedule('latu-lipas-sync') where exists (select 1 from cron.job where jobname = 'latu-lipas-sync');
-select cron.schedule('latu-lipas-sync', '30 1 * * *',
+select cron.schedule('latu-lipas-sync', '30 1 * * 1',
   $job$ set statement_timeout = '15min'; select public.refresh_municipalities(); select public.sync_lipas(); $job$);

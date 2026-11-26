@@ -53,7 +53,7 @@ supabase/schema.sql luonnos tietokannasta jaettua taustapalvelua varten
 
 ## Versio 1.0
 
-- **Ladut koko Suomesta** LIPASista (tyyppi 4402). `supabase/v1.0.sql` luo yöllisen päivityksen (pg_cron + http), joka hakee ladut ja kuntien nimet. Ladut tallennetaan PostGIS-geometrioina, ja sovellus hakee lähimmät (`tracks_near`), kartan näkymän (`tracks_in_bbox`) ja hakutulokset (`tracks_search`).
+- **Ladut koko Suomesta** LIPASista (tyyppi 4402). `supabase/v1.0.sql` luo viikoittaisen päivityksen (pg_cron + http, maanantaiyönä), joka hakee ladut ja kuntien nimet. Ladut tallennetaan PostGIS-geometrioina, ja sovellus hakee lähimmät (`tracks_near`), kartan näkymän (`tracks_in_bbox`) ja hakutulokset (`tracks_search`).
 - **Ladun huolto:** raporttiin voi merkitä *Kunnostettu* ja *Pohjattu*. Ne näkyvät listassa ja ladun sivulla (alle 72 h vanhat).
 - **Kartta:** ladut viivoina. Kuntovärit ovat Latu+-ominaisuus, joka on nyt kaikille.
 - **Lämpötila ja voitelusuositus** ladun sivulla (Ilmatieteen laitoksen avoin data, haetaan suoraan puhelimesta). Latu+-ominaisuus, nyt kaikille.

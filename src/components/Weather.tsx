@@ -9,7 +9,7 @@ import { WAX_SCALE, waxAdvice } from '../wax';
 
 /** Lämpötila ja voitelusuositus ladun sivulle (Latu+-ominaisuus, nyt kaikille). */
 export function WeatherCard({ track }: { track: Track }) {
-  const { canUse, plus, reportsFor } = useStore();
+  const { canUse, reportsFor } = useStore();
   const allowed = canUse('weather');
   const [w, setW] = useState<Weather | null>(null);
   const [failed, setFailed] = useState(false);
@@ -84,7 +84,6 @@ export function WeatherCard({ track }: { track: Track }) {
           ))}
         </View>
         <Text style={styles.small}>Suuntaa antava · Lämpötila: Ilmatieteen laitos</Text>
-        {!plus.weatherRequiresPlus && <Text style={styles.notice}>{plus.notice}</Text>}
       </View>
     </View>
   );
@@ -105,7 +104,6 @@ const styles = StyleSheet.create({
   scale: { flexDirection: 'row', gap: 6 },
   scaleItem: { flex: 1, height: 8, borderRadius: 4 },
   scaleSel: { borderWidth: 2, borderColor: colors.ink, height: 12, marginTop: -2 },
-  notice: { fontFamily: fonts.medium, fontSize: 12, color: colors.accent },
   locked: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   lockedText: { flex: 1, fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
 });
