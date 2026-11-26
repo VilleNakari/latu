@@ -72,6 +72,18 @@ supabase/schema.sql luonnos tietokannasta jaettua taustapalvelua varten
    ```
 3. `npm install` ja `npx expo start`.
 
+## Versio 1.0.1 – Applen sääntö 1.2 (käyttäjien sisältö)
+
+Aja `supabase/v1.0.1.sql` Supabasen SQL Editorissa. Se lisää:
+- **Sanasuodattimen** kommentteihin ja nimimerkkeihin (taulu `banned_words`, sanojen alkuja). Uusi sana: `insert into public.banned_words values ('sana');`
+- **Kirjoittajan piilotuksen:** raportin ⋯-valikosta "Piilota kirjoittajan raportit". Palautus Ladut-listan alareunasta.
+- **Kehittäjän työkalut** (eivät näy sovellukselle):
+  - Ilmoitetut raportit: `select * from admin.flagged_reports;`
+  - Piilota raportti: `select admin.hide_report('<id>');`
+  - Palauta raportti: `select admin.restore_report('<id>');`
+  - Estä kirjoittaja ja piilota kaikki hänen raporttinsa: `select admin.ban_author('<raportin id>', 'syy');`
+- **Yhteystiedot:** support.latu@gmail.com sovelluksessa ja tietosuojaselosteessa.
+
 ## Supabase (jaettu tietokanta)
 
 Sovellus käyttää Supabasea, kun `src/config.ts`:ssä on `SUPABASE_URL` ja `SUPABASE_KEY` (publishable key). Ilman niitä sovellus toimii testitilassa esimerkkidatalla.

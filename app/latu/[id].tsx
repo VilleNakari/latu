@@ -13,7 +13,7 @@ import { initials, km, timeAgo } from '../../src/utils';
 export default function TrackScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { trackById, ensureTrack, reportsFor, latestFor, deleteReport, flagReport, refresh, refreshing } = useStore();
+  const { trackById, ensureTrack, reportsFor, latestFor, deleteReport, flagReport, blockAuthor, refresh, refreshing } = useStore();
   const track = trackById(id);
   useEffect(() => {
     if (!track && id) ensureTrack(id);
@@ -37,7 +37,7 @@ export default function TrackScreen() {
     ]);
 
   const confirmFlag = (reportId: string) =>
-    Alert.alert('Ilmoita asiaton raportti?', 'Raportti piilotetaan, jos useampi käyttäjä ilmoittaa siitä.', [
+    Alert.alert('Ilmoita asiaton raportti?', 'Raportti piilotetaan, jos useampi käyttäjä ilmoittaa siitä, ja ylläpito tarkistaa sen.', [
       { text: 'Peruuta', style: 'cancel' },
       {
         text: 'Ilmoita',
@@ -47,6 +47,23 @@ export default function TrackScreen() {
             .then(() => Alert.alert('Kiitos!', 'Ilmoitus on vastaanotettu.'))
             .catch((e: Error) => Alert.alert('Ilmoitus epäonnistui', e.message)),
       },
+    ]);
+
+  const confirmBlock = (reportId: string) =>
+    Alert.alert('Piilota kirjoittajan raportit?', 'Et näe enää tämän kirjoittajan raportteja. Voit palauttaa piilotetut kirjoittajat Ladut-listan alareunasta.', [
+      { text: 'Peruuta', style: 'cancel' },
+      {
+        text: 'Piilota',
+        style: 'destructive',
+        onPress: () => blockAuthor(reportId).catch((e: Error) => Alert.alert('Piilotus epäonnistui', e.message)),
+      },
+    ]);
+
+  const reportActions = (reportId: string) =>
+    Alert.alert('Raportti', undefined, [
+      { text: 'Ilmoita asiaton raportti', onPress: () => confirmFlag(reportId) },
+      { text: 'Piilota kirjoittajan raportit', onPress: () => confirmBlock(reportId) },
+      { text: 'Peruuta', style: 'cancel' },
     ]);
 
   const reports = reportsFor(track.id);
@@ -139,13 +156,13 @@ export default function TrackScreen() {
                         </Pressable>
                       ) : (
                         <Pressable
-                          onPress={() => confirmFlag(r.id)}
+                          onPress={() => reportActions(r.id)}
                           hitSlop={8}
                           style={styles.trash}
                           accessibilityRole="button"
-                          accessibilityLabel="Ilmoita asiaton raportti"
+                          accessibilityLabel="Ilmoita tai piilota raportti"
                         >
-                          <Feather name="flag" size={15} color={colors.muted} />
+                          <Feather name="more-horizontal" size={18} color={colors.muted} />
                         </Pressable>
                       )}
                     </View>

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File } from 'expo-file-system';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { PHOTO_BUCKET } from '../config';
+import { PHOTO_BUCKET, SUPPORT_EMAIL } from '../config';
 import type { Level, NewReport, PlusSettings, Profile, Report, Track, TrackGeometry } from '../types';
 import { seedReports, seedTracks } from './seed';
 import { ensureSession, supabase } from './supabase';
@@ -58,6 +58,10 @@ interface StoreValue {
   addReport: (r: NewReport) => Promise<void>;
   deleteReport: (id: string) => Promise<void>;
   flagReport: (id: string) => Promise<void>;
+  /** Piilottaa raportin kirjoittajan kaikki raportit tältä laitteelta. */
+  blockAuthor: (reportId: string) => Promise<void>;
+  /** Palauttaa kaikki piilotetut kirjoittajat. */
+  unblockAll: () => Promise<void>;
   updateProfile: (p: Partial<Profile>) => Promise<void>;
 }
 
@@ -140,6 +144,8 @@ function stepError(step: string, e: unknown): Error {
 function friendlyError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
   if (/Liian monta/.test(msg)) return 'Olet lähettänyt jo monta raporttia tunnin sisällä. Yritä myöhemmin uudelleen.';
+  if (/Asiaton sana/.test(msg)) return 'Kommentissa tai nimimerkissä on sana, jota ei voi julkaista. Muokkaa tekstiä ja yritä uudelleen.';
+  if (/Raportointi estetty/.test(msg)) return `Raportointi on estetty tältä laitteelta. Jos kyse on virheestä, ota yhteyttä: ${SUPPORT_EMAIL}`;
   console.warn('[latu] virhe:', msg);
   // Kehitystilassa (Expo Go) näytetään myös tekninen syy vianetsintää varten.
   const detail = __DEV__ ? `\n\n(${msg})` : '';
@@ -348,6 +354,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (e && e.code !== '23505') throw new Error(friendlyError(e));
   }, []);
 
+  const blockAuthor = useCallback(
+    async (reportId: string) => {
+      if (!supabase) return;
+      const { error: e } = await supabase.rpc('block_author', { rid: reportId });
+      if (e) throw new Error(friendlyError(e));
+      await loadShared();
+    },
+    [loadShared]
+  );
+
+  const unblockAll = useCallback(async () => {
+    if (!supabase) return;
+    const { error: e } = await supabase.rpc('unblock_all');
+    if (e) throw new Error(friendlyError(e));
+    await loadShared();
+  }, [loadShared]);
+
   const updateProfile = useCallback(
     async (p: Partial<Profile>) => {
       const next = { ...profile, ...p };
@@ -392,9 +415,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addReport,
       deleteReport,
       flagReport,
+      blockAuthor,
+      unblockAll,
       updateProfile,
     };
-  }, [ready, error, refreshing, tracks, nearIds, reports, profile, plus, loadNearby, loadBbox, search, ensureTrack, refresh, addReport, deleteReport, flagReport, updateProfile]);
+  }, [ready, error, refreshing, tracks, nearIds, reports, profile, plus, loadNearby, loadBbox, search, ensureTrack, refresh, addReport, deleteReport, flagReport, blockAuthor, unblockAll, updateProfile]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

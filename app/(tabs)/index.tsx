@@ -2,12 +2,12 @@ import { Feather } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { Link, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCareLine } from '../../src/components/Care';
 import { Logo } from '../../src/components/Logo';
 import { Chip, SectionTitle, StatusPill } from '../../src/components/ui';
-import { PRIVACY_URL } from '../../src/config';
+import { PRIVACY_URL, SUPPORT_EMAIL } from '../../src/config';
 import { CARE_GROOMED, useStore } from '../../src/data/store';
 import { colors, fonts } from '../../src/theme';
 import type { Track } from '../../src/types';
@@ -22,7 +22,7 @@ const FALLBACK = { lat: 60.1699, lng: 24.9384 };
 
 export default function TracksScreen() {
   const insets = useSafeAreaInsets();
-  const { nearby, latestFor, lastCare, reportsFor, refresh, refreshing, error, loadNearby, search, online } = useStore();
+  const { nearby, latestFor, lastCare, reportsFor, refresh, refreshing, error, loadNearby, search, online, unblockAll } = useStore();
   const careLine = useCareLine();
   const loc = useApproxLocation();
   const [query, setQuery] = useState('');
@@ -183,7 +183,23 @@ export default function TracksScreen() {
           <Feather name="shield" size={14} color={colors.muted} />
           <Text style={styles.footerText}>Tietosuoja · emme kerää nimeä emmekä sijaintia</Text>
         </Pressable>
+        <Pressable onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} accessibilityRole="link" style={styles.privacy}>
+          <Feather name="mail" size={14} color={colors.muted} />
+          <Text style={styles.footerText}>Palaute ja ilmoitukset: {SUPPORT_EMAIL}</Text>
+        </Pressable>
         <Text style={styles.footerText}>Latutiedot: LIPAS, Jyväskylän yliopisto · Sää: Ilmatieteen laitos</Text>
+        <Pressable
+          onPress={() =>
+            Alert.alert('Palauta piilotetut kirjoittajat?', 'Näet taas kaikkien kirjoittajien raportit.', [
+              { text: 'Peruuta', style: 'cancel' },
+              { text: 'Palauta', onPress: () => unblockAll().catch(() => {}) },
+            ])
+          }
+          accessibilityRole="button"
+          style={styles.privacy}
+        >
+          <Text style={styles.footerText}>Palauta piilotetut kirjoittajat</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
