@@ -13,4 +13,4 @@ export const PHOTO_BUCKET = 'report-photos';
 export const SUPPORT_EMAIL = 'support.latu@gmail.com';
 
 /** Tietosuojaselosteen osoite (näytetään sovelluksessa ja App Storessa). */
-export const PRIVACY_URL = 'https://github.com/VilleNakari/latu/blob/main/latu-app/PRIVACY.md';
+export const PRIVACY_URL = 'https://github.com/VilleNakari/latu/blob/main/PRIVACY.md';
